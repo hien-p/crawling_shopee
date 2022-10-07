@@ -1,16 +1,25 @@
-
-from asyncio.log import logger
-from email.mime import base, image
-from lib2to3.pgen2 import driver
-from math import prod
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import TimeoutException
 from time import sleep, time
 from tqdm import tqdm
 import re
+import datetime
+import pandas as pd
+
+
+def sanpham(names,total,borns) -> list:
+    """ return (ten tac gia, link, ngaythangnamsinh, quotes )"""
+    result = list()
+    for i in range(len(names)):
+        result.append({'ten san pham': names[i],
+            'total_count': total[i],
+             'Date': borns[i]
+             })
+
+    return result
+
 
 # create object for chrome options
 chrome_options = Options()
@@ -31,18 +40,20 @@ chrome_options.add_experimental_option("prefs", {
 
 
 lines = []
-name_of_product = []
+
 with open("list.txt", "r") as file:
     for line in file: 
         line = line.strip() #or some other preprocessing
         lines.append(line) #storing everything in memory!
 
 total_count_product = []
-
+name_of_product = []
+date_list = []
+x = datetime.datetime.now()
 for url in tqdm(range(len(lines))):
     browser = webdriver.Chrome(options = chrome_options)
     #try:
-   
+    
     browser.get(str(lines[url]))
     while True:
         try: 
@@ -52,17 +63,23 @@ for url in tqdm(range(len(lines))):
             soup = BeautifulSoup(html, "html.parser")
             
             products_info = soup.findAll('div', class_='OktMMO')
+            name_info =  soup.findAll('div', class_='_2rQP1z')
+            name_info = [i.find('span') for i in name_info] 
             count = 0
             total_count = []
+            
             if len(products_info) > 2:
                 total_sup = re.findall(r'\d+', products_info[-2].text)
             else:
                 total_sup = re.findall(r'\d+', products_info[0].text)
                 print()
-            res = int("".join(map(str, total_sup)))
-            print(res)
-            total_count_product.append(res)
+            num = int("".join(map(str, total_sup)))
+            text = str("".join(map(str, name_info[0].text)))
+            print(num, name_info[0].text) 
 
+            total_count_product.append(num)
+            name_of_product.append(text)
+            date_list.append(x.strftime("%A"))
             break
         except TimeoutException: 
             print('Error')
@@ -70,11 +87,13 @@ for url in tqdm(range(len(lines))):
     browser.quit()
 
 
-print(total_count_product)
-
 # import csv
 # # field names 
-# fields = ['product', 'totalcount', 'Date']
+items = sanpham(name_of_product,total_count_product ,date_list)
+path = "sanpham.csv"
+# print(items)
+df=pd.DataFrame(items)
+df.to_csv(path,index=None)
 # with open('GFG', 'w') as f:
       
 #     # using csv.writer method from CSV package
