@@ -93,7 +93,7 @@ items = sanpham(name_of_product,total_count_product ,date_list)
 path = "sanpham.csv"
 # print(items)
 df=pd.DataFrame(items)
-df.to_csv(path,index=None)
+df.to_csv(path,index=None,mode='a', header=False)
 # with open('GFG', 'w') as f:
       
 #     # using csv.writer method from CSV package
